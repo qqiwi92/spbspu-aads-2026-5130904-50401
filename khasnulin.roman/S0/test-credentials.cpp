@@ -1,9 +1,10 @@
-#define BOOST_TEST_MODULE Test credentials
-#include <boost/test/included/unit_test.hpp>
+#include "credentials.hpp"
+#include <boost/test/unit_test.hpp>
+#include <sstream>
 
 BOOST_AUTO_TEST_CASE(credential_test)
 {
-  int i = 1;
-  BOOST_TEST(i);
-  BOOST_TEST(i == 2);
+  std::ostringstream out;
+  khasnulin::out_credentials(out);
+  BOOST_TEST(out.str() == "khasnulin.roman");
 }

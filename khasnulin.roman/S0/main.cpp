@@ -1,6 +1,7 @@
+#include "credentials.hpp"
 #include <iostream>
 
 int main()
 {
-  std::cout << "khasnulin.roman" << "\n";
+  khasnulin::out_credentials(std::cout) << "\n";
 }

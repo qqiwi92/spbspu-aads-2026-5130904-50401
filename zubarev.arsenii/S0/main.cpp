@@ -1,5 +1,5 @@
-int main(int argc, char const *argv[])
+#include <iostream>
+int main()
 {
-
+  std::cout << "zubarev.arsenii" << "\n";
 }
-

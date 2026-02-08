@@ -1,6 +1,6 @@
-#include "credentials.hpp"
-
 #include <iostream>
+
+#include "credentials.hpp"
 
 std::ostream &khasnulin::out_credentials(std::ostream &out)
 {

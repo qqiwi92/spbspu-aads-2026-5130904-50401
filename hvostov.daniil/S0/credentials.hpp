@@ -1,6 +1,6 @@
 #ifndef CREDENTIALS_HPP
 #define CREDENTIALS_HPP
-#include <iostfwd>
+#include <iosfwd>
 
 namespace hvostov {
   std::ostream & out_credentials(std::ostream & out);

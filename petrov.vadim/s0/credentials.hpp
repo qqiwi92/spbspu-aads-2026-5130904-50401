@@ -3,6 +3,6 @@
 #include <iosfwd>
 namespace petrov
 {
-  std:ostream & out_credentials(std::ostram & out);
+  std::ostream& out_credentials(std::ostream& out);
 }
 #endif

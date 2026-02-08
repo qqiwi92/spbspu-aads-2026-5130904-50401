@@ -3,5 +3,5 @@
 
 std::ostream & zharov::out_credentials(std::ostream & out)
 {
-  return out << "zharov.daniil";
+  return out << "zharov.danil";
 }

@@ -3,5 +3,5 @@
 
 std::ostream & kondrat::out_credentials(std::ostream & out)
 {
-  return out << "kondrat.stepa";
+  return out << "kondrat.stepan";
 }

@@ -2,6 +2,6 @@
 
 int main()
 {
-  std:cout << "kondrat.stepan" << "\n";
+  std::cout << "kondrat.stepan" << "\n";
 }
 

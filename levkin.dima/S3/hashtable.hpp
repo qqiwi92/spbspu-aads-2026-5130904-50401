@@ -68,6 +68,23 @@ namespace levkin {
 
     void rehash(size_t slots);
 
+    size_t get_overflow_count() const
+    {
+      size_t total = 0;
+
+      for (size_t i = 0; i < size_; ++i) {
+        total += data_[i].overflow_.size();
+      }
+      return total;
+    }
+
+    double get_average_elements_per_bucket() const
+    {
+      if (size_ == 0)
+        return 0.0;
+      return static_cast< double >(used_) / size_;
+    }
+
   private:
     using Cell = std::pair< Key, Value >;
     struct Bucket {

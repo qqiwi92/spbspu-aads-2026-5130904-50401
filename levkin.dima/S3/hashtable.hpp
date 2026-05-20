@@ -13,7 +13,25 @@ namespace levkin {
   public:
     void add(Key k, Value v);
     Value drop(Key k);
-    bool has(Key k);
+
+    bool has(const Key& k) const
+    {
+      size_t ind = getBucketIndex(k);
+      const Bucket& bucket = data_[ind];
+
+      for (size_t i = 0; i < bucket.filled; ++i) {
+        if (eq_fn(bucket.cells[i].first, k)) {
+          return true;
+        }
+      }
+      for (const auto& it : bucket.overflow_) {
+        if (eq_fn(it.first, k)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
     void rehash(size_t slots);
 
   private:

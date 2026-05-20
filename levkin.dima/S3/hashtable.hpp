@@ -5,9 +5,12 @@
 #include "vector.hpp"
 #include <boost/uuid/detail/sha1.hpp>
 #include <cstddef>
+#include <stdexcept>
+#include <utility>
 
 namespace levkin {
   constexpr size_t bucketSize = 3;
+
   template < class Key, class Value, class Hash, class Equal > class HashTable
   {
   public:
@@ -87,14 +90,23 @@ namespace levkin {
 
   private:
     using Cell = std::pair< Key, Value >;
+
+    size_t size_ = 0;
+    size_t used_ = 0;
+
     struct Bucket {
-      size_t filled;
-      Cell pair[bucketSize];
+      size_t filled = 0;
+      Cell cells[bucketSize];
       List< Cell > overflow_;
     };
-    stuff::Vector< Bucket > data_;
-  };
 
+    stuff::Vector< Bucket > data_;
+
+    Hash hash_fn;
+    Equal eq_fn;
+
+    size_t getBucketIndex(const Key& k) const { return hash_fn(k) % size_; }
+  };
 }
 
 #endif

@@ -49,7 +49,54 @@ namespace levkin {
       used_++;
     };
 
-    Value drop(Key k);
+    Value drop(Key k)
+    {
+      size_t ind = getBucketIndex(k);
+      Bucket& original_bucket = data_[ind];
+    
+      Bucket tempBucket = original_bucket; 
+      bool found = false;
+      Value removed_value{};
+    
+      for (size_t i = 0; i < tempBucket.filled; ++i) {
+        if (eq_fn(tempBucket.cells[i].first, k)) {
+          removed_value = tempBucket.cells[i].second;
+    
+          for (size_t j = i; j < tempBucket.filled - 1; ++j) {
+            tempBucket.cells[j] = tempBucket.cells[j + 1];
+          }
+          tempBucket.filled--;
+    
+          if (!tempBucket.overflow_.empty()) {
+            tempBucket.cells[tempBucket.filled++] = tempBucket.overflow_.front();
+            tempBucket.overflow_.popFront();
+          }
+    
+          found = true;
+          break;
+        }
+      }
+    
+      if (!found) {
+        for (auto it = tempBucket.overflow_.begin(); it != tempBucket.overflow_.end(); ++it) {
+          if (eq_fn((*it).first, k)) {
+            removed_value = (*it).second;
+            tempBucket.overflow_.erase(it);
+            found = true;
+            break;
+          }
+        }
+      }
+    
+      if (!found) {
+        throw std::runtime_error("key not found");
+      }
+    
+      original_bucket = std::move(tempBucket);
+      used_--;
+    
+      return removed_value;
+    }
 
     bool has(const Key& k) const
     {

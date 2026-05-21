@@ -93,32 +93,34 @@ namespace levkin {
     {
       size_t ind = getBucketIndex(k);
       Bucket& original_bucket = data_[ind];
-    
-      Bucket tempBucket = original_bucket; 
+
+      Bucket tempBucket = original_bucket;
       bool found = false;
       Value removed_value{};
-    
+
       for (size_t i = 0; i < tempBucket.filled; ++i) {
         if (eq_fn(tempBucket.cells[i].first, k)) {
           removed_value = tempBucket.cells[i].second;
-    
+
           for (size_t j = i; j < tempBucket.filled - 1; ++j) {
             tempBucket.cells[j] = tempBucket.cells[j + 1];
           }
           tempBucket.filled--;
-    
+
           if (!tempBucket.overflow_.empty()) {
-            tempBucket.cells[tempBucket.filled++] = tempBucket.overflow_.front();
+            tempBucket.cells[tempBucket.filled++] =
+                tempBucket.overflow_.front();
             tempBucket.overflow_.popFront();
           }
-    
+
           found = true;
           break;
         }
       }
-    
+
       if (!found) {
-        for (auto it = tempBucket.overflow_.begin(); it != tempBucket.overflow_.end(); ++it) {
+        for (auto it = tempBucket.overflow_.begin();
+             it != tempBucket.overflow_.end(); ++it) {
           if (eq_fn((*it).first, k)) {
             removed_value = (*it).second;
             tempBucket.overflow_.erase(it);
@@ -127,14 +129,14 @@ namespace levkin {
           }
         }
       }
-    
+
       if (!found) {
         throw std::runtime_error("key not found");
       }
-    
+
       original_bucket = std::move(tempBucket);
       used_--;
-    
+
       return removed_value;
     }
 
@@ -156,7 +158,20 @@ namespace levkin {
       return false;
     };
 
-    void rehash(size_t slots);
+    void rehash(size_t slots)
+    {
+      HashTable temp(slots);
+
+      for (size_t i = 0; i < size_; ++i) {
+        for (size_t j = 0; j < data_[i].filled; ++j) {
+          temp.add(data_[i].cells[j].first, data_[i].cells[j].second);
+        }
+        for (const auto& it : data_[i].overflow_) {
+          temp.add(it.first, it.second);
+        }
+      }
+      *this = std::move(temp);
+    }
 
     size_t get_overflow_count() const
     {

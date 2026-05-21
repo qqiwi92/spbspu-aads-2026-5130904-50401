@@ -23,6 +23,46 @@ namespace levkin {
       data_.resize(initial_slots);
     }
 
+    HashTable(const HashTable& other)
+        : hash_fn(other.hash_fn), eq_fn(other.eq_fn), size_(other.size_),
+          used_(other.used_), data_(other.data_)
+    {
+    }
+
+    HashTable(HashTable&& other) noexcept
+        : hash_fn(std::move(other.hash_fn)), eq_fn(std::move(other.eq_fn)),
+          size_(other.size_), used_(other.used_), data_(std::move(other.data_))
+    {
+      other.size_ = 0;
+      other.used_ = 0;
+    }
+
+    HashTable& operator=(const HashTable& other)
+    {
+      if (this != &other) {
+        HashTable temp(other);
+        *this = std::move(temp);
+      }
+      return *this;
+    }
+
+    HashTable& operator=(HashTable&& other) noexcept
+    {
+      if (this != &other) {
+        hash_fn = std::move(other.hash_fn);
+        eq_fn = std::move(other.eq_fn);
+        size_ = other.size_;
+        used_ = other.used_;
+        data_ = std::move(other.data_);
+
+        other.size_ = 0;
+        other.used_ = 0;
+      }
+      return *this;
+    }
+
+    ~HashTable() = default;
+
     void add(Key k, Value v)
     {
       size_t ind = getBucketIndex(k);

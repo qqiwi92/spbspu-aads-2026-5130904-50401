@@ -13,7 +13,219 @@ namespace levkin {
 
   template < class Key, class Value, class Hash, class Equal > class HashTable
   {
+  private:
+    using Cell = std::pair< Key, Value >;
+
+    struct Bucket {
+      size_t filled = 0;
+      Cell cells[bucketSize];
+      List< Cell > overflow_;
+    };
+
   public:
+    class Iterator
+    {
+    public:
+      Iterator()
+          : table_(nullptr), bucket_ind(0), cell_ind(0), in_overflow(false)
+      {
+      }
+
+      Iterator(HashTable* table, size_t b_ind)
+          : table_(table), bucket_ind(b_ind), cell_ind(0), in_overflow(false)
+      {
+        satisfy();
+      }
+
+      Cell& operator*() const
+      {
+        if (in_overflow) {
+          return *overflow_it;
+        }
+        return table_->data_[bucket_ind].cells[cell_ind];
+      }
+
+      Cell* operator->() const { return &(operator*()); }
+
+      Iterator& operator++()
+      {
+        advance();
+        return *this;
+      }
+
+      Iterator operator++(int)
+      {
+        Iterator tmp = *this;
+        advance();
+        return tmp;
+      }
+
+      bool operator==(const Iterator& other) const
+      {
+        if (table_ != other.table_ || bucket_ind != other.bucket_ind)
+          return false;
+        if (table_ == nullptr || bucket_ind >= table_->size_)
+          return true;
+        if (in_overflow != other.in_overflow)
+          return false;
+        if (in_overflow)
+          return overflow_it == other.overflow_it;
+        return cell_ind == other.cell_ind;
+      }
+
+      bool operator!=(const Iterator& other) const { return !(*this == other); }
+
+    private:
+      HashTable* table_;
+      size_t bucket_ind;
+      size_t cell_ind;
+      typename List< Cell >::iterator overflow_it;
+      bool in_overflow;
+
+      void satisfy()
+      {
+        while (bucket_ind < table_->size_) {
+          Bucket& bucket = table_->data_[bucket_ind];
+
+          if (!in_overflow) {
+            if (cell_ind < bucket.filled) {
+              return;
+            }
+            in_overflow = true;
+            overflow_it = bucket.overflow_.begin();
+          }
+
+          if (in_overflow) {
+            if (overflow_it != bucket.overflow_.end()) {
+              return;
+            }
+            in_overflow = false;
+            cell_ind = 0;
+            bucket_ind++;
+          }
+        }
+      }
+
+      void advance()
+      {
+        if (!in_overflow) {
+          cell_ind++;
+        } else {
+          overflow_it++;
+        }
+        satisfy();
+      }
+    };
+
+    class ConstIterator
+    {
+    public:
+      ConstIterator()
+          : table_(nullptr), bucket_ind(0), cell_ind(0), in_overflow(false)
+      {
+      }
+
+      ConstIterator(const HashTable* table, size_t b_ind)
+          : table_(table), bucket_ind(b_ind), cell_ind(0), in_overflow(false)
+      {
+        satisfy();
+      }
+
+      const Cell& operator*() const
+      {
+        if (in_overflow) {
+          return *overflow_it;
+        }
+        return table_->data_[bucket_ind].cells[cell_ind];
+      }
+
+      const Cell* operator->() const { return &(operator*()); }
+
+      ConstIterator& operator++()
+      {
+        advance();
+        return *this;
+      }
+
+      ConstIterator operator++(int)
+      {
+        ConstIterator tmp = *this;
+        advance();
+        return tmp;
+      }
+
+      bool operator==(const ConstIterator& other) const
+      {
+        if (table_ != other.table_ || bucket_ind != other.bucket_ind)
+          return false;
+        if (table_ == nullptr || bucket_ind >= table_->size_)
+          return true;
+        if (in_overflow != other.in_overflow)
+          return false;
+        if (in_overflow)
+          return overflow_it == other.overflow_it;
+        return cell_ind == other.cell_ind;
+      }
+
+      bool operator!=(const ConstIterator& other) const
+      {
+        return !(*this == other);
+      }
+
+    private:
+      const HashTable* table_;
+      size_t bucket_ind;
+      size_t cell_ind;
+      typename List< Cell >::const_iterator overflow_it;
+      bool in_overflow;
+
+      void satisfy()
+      {
+        while (bucket_ind < table_->size_) {
+          const Bucket& bucket = table_->data_[bucket_ind];
+
+          if (!in_overflow) {
+            if (cell_ind < bucket.filled) {
+              return;
+            }
+            in_overflow = true;
+            overflow_it = bucket.overflow_.cbegin();
+          }
+
+          if (in_overflow) {
+            if (overflow_it != bucket.overflow_.cend()) {
+              return;
+            }
+            in_overflow = false;
+            cell_ind = 0;
+            bucket_ind++;
+          }
+        }
+      }
+
+      void advance()
+      {
+        if (!in_overflow) {
+          cell_ind++;
+        } else {
+          overflow_it++;
+        }
+        satisfy();
+      }
+    };
+
+    using iterator = Iterator;
+    using const_iterator = ConstIterator;
+
+    iterator begin() { return iterator(this, 0); }
+    iterator end() { return iterator(this, size_); }
+
+    const_iterator begin() const { return const_iterator(this, 0); }
+    const_iterator end() const { return const_iterator(this, size_); }
+    const_iterator cbegin() const { return const_iterator(this, 0); }
+    const_iterator cend() const { return const_iterator(this, size_); }
+
+
     explicit HashTable(size_t initial_slots = 16)
         : size_(initial_slots), used_(0)
     {
@@ -87,7 +299,7 @@ namespace levkin {
         bucket.cells[bucket.filled++] = std::make_pair(k, v);
       }
       used_++;
-    };
+    }
 
     Value drop(Key k)
     {
@@ -156,19 +368,14 @@ namespace levkin {
         }
       }
       return false;
-    };
+    }
 
     void rehash(size_t slots)
     {
       HashTable temp(slots);
 
-      for (size_t i = 0; i < size_; ++i) {
-        for (size_t j = 0; j < data_[i].filled; ++j) {
-          temp.add(data_[i].cells[j].first, data_[i].cells[j].second);
-        }
-        for (const auto& it : data_[i].overflow_) {
-          temp.add(it.first, it.second);
-        }
+      for (auto it = begin(); it != end(); ++it) {
+        temp.add((*it).first, (*it).second);
       }
       *this = std::move(temp);
     }
@@ -191,16 +398,8 @@ namespace levkin {
     }
 
   private:
-    using Cell = std::pair< Key, Value >;
-
     size_t size_ = 0;
     size_t used_ = 0;
-
-    struct Bucket {
-      size_t filled = 0;
-      Cell cells[bucketSize];
-      List< Cell > overflow_;
-    };
 
     stuff::Vector< Bucket > data_;
 

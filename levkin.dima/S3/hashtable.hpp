@@ -3,141 +3,77 @@
 
 #include "list.hpp"
 #include "vector.hpp"
+#include <algorithm>
 #include <boost/uuid/detail/sha1.hpp>
 #include <cstddef>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 namespace levkin {
-  constexpr size_t bucketSize = 3;
-
-  template < class Key, class Value, class Hash, class Equal > class HashTable
-  {
-  private:
-    using Cell = std::pair< Key, Value >;
-
-    struct Bucket {
-      size_t filled = 0;
-      Cell cells[bucketSize];
-      List< Cell > overflow_;
-    };
-
-  public:
-    class Iterator
+  template < class T > struct Sha1Hasher {
+    size_t operator()(const T& key) const
     {
-    public:
-      Iterator()
-          : table_(nullptr), bucket_ind(0), cell_ind(0), in_overflow(false)
-      {
+      boost::uuids::detail::sha1 sha1;
+      sha1.process_bytes(&key, sizeof(T));
+      unsigned int digest[5];
+      sha1.get_digest(digest);
+
+      if (sizeof(size_t) >= 8) {
+        return (static_cast< size_t >(digest[0]) << 32) | digest[1];
       }
+      return static_cast< size_t >(digest[0]);
+    }
+  };
 
-      Iterator(HashTable* table, size_t b_ind)
-          : table_(table), bucket_ind(b_ind), cell_ind(0), in_overflow(false)
-      {
-        satisfy();
-      }
-
-      Cell& operator*() const
-      {
-        if (in_overflow) {
-          return *overflow_it;
-        }
-        return table_->data_[bucket_ind].cells[cell_ind];
-      }
-
-      Cell* operator->() const { return &(operator*()); }
-
-      Iterator& operator++()
-      {
-        advance();
-        return *this;
-      }
-
-      Iterator operator++(int)
-      {
-        Iterator tmp = *this;
-        advance();
-        return tmp;
-      }
-
-      bool operator==(const Iterator& other) const
-      {
-        if (table_ != other.table_ || bucket_ind != other.bucket_ind)
-          return false;
-        if (table_ == nullptr || bucket_ind >= table_->size_)
-          return true;
-        if (in_overflow != other.in_overflow)
-          return false;
-        if (in_overflow)
-          return overflow_it == other.overflow_it;
-        return cell_ind == other.cell_ind;
-      }
-
-      bool operator!=(const Iterator& other) const { return !(*this == other); }
-
-    private:
-      HashTable* table_;
-      size_t bucket_ind;
-      size_t cell_ind;
-      typename List< Cell >::iterator overflow_it;
-      bool in_overflow;
-
-      void satisfy()
-      {
-        while (bucket_ind < table_->size_) {
-          Bucket& bucket = table_->data_[bucket_ind];
-
-          if (!in_overflow) {
-            if (cell_ind < bucket.filled) {
-              return;
-            }
-            in_overflow = true;
-            overflow_it = bucket.overflow_.begin();
-          }
-
-          if (in_overflow) {
-            if (overflow_it != bucket.overflow_.end()) {
-              return;
-            }
-            in_overflow = false;
-            cell_ind = 0;
-            bucket_ind++;
-          }
-        }
-      }
-
-      void advance()
-      {
-        if (!in_overflow) {
-          cell_ind++;
-        } else {
-          overflow_it++;
-        }
-        satisfy();
-      }
-    };
-
-    class ConstIterator
+  template <> struct Sha1Hasher< std::string > {
+    size_t operator()(const std::string& key) const
     {
-    public:
-      ConstIterator()
-          : table_(nullptr), bucket_ind(0), cell_ind(0), in_overflow(false)
-      {
-      }
+      boost::uuids::detail::sha1 sha1;
+      sha1.process_bytes(key.data(), key.size());
+      unsigned int digest[5];
+      sha1.get_digest(digest);
 
-      ConstIterator(const HashTable* table, size_t b_ind)
-          : table_(table), bucket_ind(b_ind), cell_ind(0), in_overflow(false)
-      {
-        satisfy();
+      if (sizeof(size_t) >= 8) {
+        return (static_cast< size_t >(digest[0]) << 32) | digest[1];
       }
+      return static_cast< size_t >(digest[0]);
+    }
+  };
 
-      const Cell& operator*() const
-      {
-        if (in_overflow) {
-          return *overflow_it;
-        }
-        return table_->data_[bucket_ind].cells[cell_ind];
+  template <> struct Sha1Hasher< std::pair< std::string, std::string > > {
+    size_t operator()(const std::pair< std::string, std::string >& key) const
+    {
+      boost::uuids::detail::sha1 sha1;
+      sha1.process_bytes(key.first.data(), key.first.size());
+      char separator = '\0';
+      sha1.process_bytes(&separator, 1);
+      sha1.process_bytes(key.second.data(), key.second.size());
+      unsigned int digest[5];
+      sha1.get_digest(digest);
+
+      if (sizeof(size_t) >= 8) {
+        return (static_cast< size_t >(digest[0]) << 32) | digest[1];
       }
+      return static_cast< size_t >(digest[0]);
+    }
+  };
+
+  template < class T > struct Equal {
+    bool operator()(const T& a, const T& b) const { return a == b; }
+  };
+
+  template < class Key, class Value > struct NodeHashTable {
+    Key key_;
+    Value value_;
+    bool is_valid_;
+
+    NodeHashTable() : is_valid_(false) {}
+    NodeHashTable(const Key& k, const Value& v, bool valid)
+        : key_(k), value_(v), is_valid_(valid)
+    {
+    }
+  };
 
       const Cell* operator->() const { return &(operator*()); }
 

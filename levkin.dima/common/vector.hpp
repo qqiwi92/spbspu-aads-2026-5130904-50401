@@ -7,7 +7,6 @@
 #include <iostream>
 #include <stdexcept>
 
-
 namespace stuff {
   template < class T > inline T* newc(size_t);
   template < class T > inline void delc(T*, size_t);
@@ -271,7 +270,7 @@ stuff::Vector< T >::Vector(const Vector< T >& rhs)
     data_ = newc< T >(capacity_);
     for (size_t i = 0; i < size_; ++i) {
       try {
-        data_[i] = rhs.data_[i];
+        stuff::construct< T >(&data_[i], rhs.data_[i]);
       } catch (...) {
         delc(data_, i);
         data_ = nullptr;
@@ -389,10 +388,19 @@ template < class T > void stuff::Vector< T >::insert(size_t index, const T& val)
   }
 
   expandIfFull();
-  for (size_t i = size_; i > index; --i) {
-    stuff::construct< T >(&data_[i], data_[i - 1]);
+
+  if (size_ > index) {
+    stuff::construct< T >(&data_[size_], std::move(data_[size_ - 1]));
+
+    for (size_t i = size_ - 1; i > index; --i) {
+      data_[i] = std::move(data_[i - 1]);
+    }
+
+    data_[index] = val;
+  } else {
+    stuff::construct< T >(&data_[index], val);
   }
-  data_[index] = val;
+
   size_++;
 }
 

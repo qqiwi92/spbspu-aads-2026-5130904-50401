@@ -189,7 +189,7 @@ namespace levkin {
 
     HashTable() : HashTable(11, 4) {}
 
-    HashTable(size_t num_buckets, size_t bucket_capacity)
+    HashTable(size_t num_buckets, size_t bucket_capacity = 4)
         : num_buckets_(num_buckets == 0 ? 11 : num_buckets),
           bucket_capacity_(bucket_capacity == 0 ? 4 : bucket_capacity),
           count_valid_(0)
@@ -291,7 +291,8 @@ namespace levkin {
         size_t curr = home_start + i;
         if (pool_[curr].is_valid_) {
           if (equal(pool_[curr].key_, key)) {
-            throw std::logic_error("Key already exists.");
+            pool_[curr].value_ = value; // Update instead of throwing!
+            return;
           }
         } else if (first_free_in_pool == pool_.getSize()) {
           first_free_in_pool = curr;
@@ -303,7 +304,8 @@ namespace levkin {
       while (it != overflow_.end()) {
         if (it->is_valid_) {
           if (equal(it->key_, key)) {
-            throw std::logic_error("Key already exists.");
+            it->value_ = value; // Update instead of throwing!
+            return;
           }
         } else if (first_free_in_list == overflow_.end()) {
           first_free_in_list = it;
@@ -315,14 +317,16 @@ namespace levkin {
         pool_[first_free_in_pool].key_ = key;
         pool_[first_free_in_pool].value_ = value;
         pool_[first_free_in_pool].is_valid_ = true;
+        count_valid_++;
       } else if (first_free_in_list != overflow_.end()) {
         first_free_in_list->key_ = key;
         first_free_in_list->value_ = value;
         first_free_in_list->is_valid_ = true;
+        count_valid_++;
       } else {
         overflow_.pushBack(NodeHashTable< Key, Value >{key, value, true});
+        count_valid_++;
       }
-      count_valid_++;
     }
 
     void add(const Key& key, Value&& value)
@@ -337,7 +341,9 @@ namespace levkin {
         size_t curr = home_start + i;
         if (pool_[curr].is_valid_) {
           if (equal(pool_[curr].key_, key)) {
-            throw std::logic_error("Key already exists.");
+            pool_[curr].value_ =
+                std::move(value); // Update instead of throwing!
+            return;
           }
         } else if (first_free_in_pool == pool_.getSize()) {
           first_free_in_pool = curr;
@@ -349,7 +355,8 @@ namespace levkin {
       while (it != overflow_.end()) {
         if (it->is_valid_) {
           if (equal(it->key_, key)) {
-            throw std::logic_error("Key already exists.");
+            it->value_ = std::move(value); // Update instead of throwing!
+            return;
           }
         } else if (first_free_in_list == overflow_.end()) {
           first_free_in_list = it;
@@ -361,15 +368,17 @@ namespace levkin {
         pool_[first_free_in_pool].key_ = key;
         pool_[first_free_in_pool].value_ = std::move(value);
         pool_[first_free_in_pool].is_valid_ = true;
+        count_valid_++;
       } else if (first_free_in_list != overflow_.end()) {
         first_free_in_list->key_ = key;
         first_free_in_list->value_ = std::move(value);
         first_free_in_list->is_valid_ = true;
+        count_valid_++;
       } else {
         overflow_.pushBack(
             NodeHashTable< Key, Value >{key, std::move(value), true});
+        count_valid_++;
       }
-      count_valid_++;
     }
 
     Value drop(const Key& key)
@@ -395,7 +404,7 @@ namespace levkin {
           return removed_value;
         }
       }
-      throw std::logic_error("No such key");
+      throw std::runtime_error("No such key");
     }
 
     bool has(const Key& key) const noexcept

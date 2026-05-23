@@ -3,14 +3,19 @@
 
 #include <boost/uuid/detail/sha1.hpp>
 #include <cstddef>
+#include <string>
+#include <utility>
 
 namespace levkin {
+  using boost_digest_t = boost::uuids::detail::sha1::digest_type;
+
   template < class T > struct Sha1Hasher {
     size_t operator()(const T& key) const
     {
       boost::uuids::detail::sha1 sha1;
       sha1.process_bytes(&key, sizeof(T));
-      unsigned int digest[5];
+
+      boost_digest_t digest;
       sha1.get_digest(digest);
 
       if (sizeof(size_t) >= 8) {
@@ -25,7 +30,8 @@ namespace levkin {
     {
       boost::uuids::detail::sha1 sha1;
       sha1.process_bytes(key.data(), key.size());
-      unsigned int digest[5];
+
+      boost_digest_t digest;
       sha1.get_digest(digest);
 
       if (sizeof(size_t) >= 8) {
@@ -43,7 +49,8 @@ namespace levkin {
       char separator = '\0';
       sha1.process_bytes(&separator, 1);
       sha1.process_bytes(key.second.data(), key.second.size());
-      unsigned int digest[5];
+
+      boost_digest_t digest;
       sha1.get_digest(digest);
 
       if (sizeof(size_t) >= 8) {
@@ -52,7 +59,6 @@ namespace levkin {
       return static_cast< size_t >(digest[0]);
     }
   };
-
 }
 
 #endif

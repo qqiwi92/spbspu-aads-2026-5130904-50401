@@ -3,13 +3,9 @@
 #include <limits>
 #include <string>
 
-#include "commands.hpp"
 #include "graph.hpp"
-#include "hasher.hpp"
-#include "hashtable.hpp" 
-#include "vector.hpp"    
 
-int main(int args, char ** argv)
+int main(int args, char** argv)
 {
   if (args != 2) {
     std::cerr << "filename is required, count of args must be 1\n";
@@ -22,10 +18,10 @@ int main(int args, char ** argv)
     return 1;
   }
 
-  std::istream & input = std::cin;
-  std::ostream & output = std::cout;
+  std::istream& input = std::cin;
+  std::ostream& output = std::cout;
 
-  levkin::Graphs graphs;
+  levkin::DB graphs;
 
   std::string graph_name;
   while (file >> graph_name) {
@@ -43,7 +39,10 @@ int main(int args, char ** argv)
     }
   }
 
-  levkin::HashTable< std::string, levkin::cmd_t, levkin::HasherXx< std::string >, levkin::KeyComparator > cmds(64);
+  levkin::HashTable<
+      std::string, levkin::cmd_t, levkin::HasherXx< std::string >,
+      levkin::KeyComparator >
+      cmds(64);
   cmds.add("graphs", levkin::cmdGraphs);
   cmds.add("vertexes", levkin::cmdVertexes);
   cmds.add("outbound", levkin::cmdOutbound);
@@ -54,9 +53,10 @@ int main(int args, char ** argv)
   cmds.add("merge", levkin::cmdMerge);
   cmds.add("extract", levkin::cmdExtract);
 
-  std::streamsize max_streamsize = std::numeric_limits< std::streamsize >::max();
+  std::streamsize max_streamsize =
+      std::numeric_limits< std::streamsize >::max();
   std::string cmd;
-  
+
   while (input >> cmd) {
     try {
       cmds.at(cmd)(input, output, graphs);
@@ -65,7 +65,7 @@ int main(int args, char ** argv)
         input.clear();
         input.ignore(max_streamsize, '\n');
       }
-    } catch (const std::out_of_range & e) {
+    } catch (const std::out_of_range& e) {
       output << "<INVALID COMMAND>\n";
       input.clear();
       input.ignore(max_streamsize, '\n');

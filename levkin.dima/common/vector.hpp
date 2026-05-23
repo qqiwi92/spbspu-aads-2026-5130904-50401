@@ -6,6 +6,8 @@
 #include <initializer_list>
 #include <iostream>
 #include <stdexcept>
+
+
 namespace stuff {
   template < class T > inline T* newc(size_t);
   template < class T > inline void delc(T*, size_t);
@@ -18,7 +20,7 @@ namespace stuff {
   {
   public:
     T* curr;
-    VIter< T >(T* ptr) : curr(ptr) {}
+    VIter(T* ptr) : curr(ptr) {}
     T& operator*() { return *(curr); }
     VIter& operator++()
     {
@@ -63,7 +65,7 @@ namespace stuff {
   {
   public:
     T* curr;
-    VCIter< T >(T* ptr) : curr(ptr) {}
+    VCIter(T* ptr) : curr(ptr) {}
     const T& operator*() { return *(curr); }
     VCIter& operator++()
     {

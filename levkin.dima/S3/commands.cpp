@@ -1,180 +1,111 @@
-#include "commands.hpp"
 #include <iostream>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
-#include "utils.hpp"
 
-namespace levkin {
+#include "commands.hpp"
 
-using Database = std::unordered_map< std::string, std::shared_ptr< Note > >;
-using cmd_t = void (*)(std::istream&, std::ostream&, Database&);
-using Cmds = std::unordered_map< std::string, cmd_t >;
-Note::Note(std::string s) : id(std::move(s)), content(){};
-
-void Note::addContent(std::string s) { content.push_back(std::move(s)); }
-
-void Note::cleanExpired()
+void levkin::cmdGraphs(std::istream&, std::ostream& output, DB& graphs)
 {
-  eraseIf([](std::weak_ptr< Note >& curr) { return curr.expired(); });
+  graphs.showGraphs(output);
 }
 
-void Note::rmLink(Link ptr)
+void levkin::cmdVertexes(
+    std::istream& input, std::ostream& output, DB& graphs)
 {
-  std::shared_ptr< Note > target = ptr.lock();
-  if (!target)
+  std::string graph_name;
+  input >> graph_name;
+  graphs.showGraphVertexes(graph_name, output);
+}
+
+void levkin::cmdOutbound(
+    std::istream& input, std::ostream& output, DB& graphs)
+{
+  std::string graph_name, vertex;
+  input >> graph_name >> vertex;
+  graphs.showGraphOutbound(graph_name, vertex, output);
+}
+
+void levkin::cmdInbound(
+    std::istream& input, std::ostream& output, DB& graphs)
+{
+  std::string graph_name, vertex;
+  input >> graph_name >> vertex;
+  graphs.showGraphInbound(graph_name, vertex, output);
+}
+
+void levkin::cmdBind(std::istream& input, std::ostream& output, DB& graphs)
+{
+  std::string graph_name, vertex_a, vertex_b;
+  size_t weight;
+  if (!(input >> graph_name >> vertex_a >> vertex_b >> weight)) {
+    return;
+  }
+  graphs.bindGraphVertexes(graph_name, vertex_a, vertex_b, weight, output);
+}
+
+void levkin::cmdCut(std::istream& input, std::ostream& output, DB& graphs)
+{
+  std::string graph_name, vertex_a, vertex_b;
+  size_t weight;
+  if (!(input >> graph_name >> vertex_a >> vertex_b >> weight)) {
+    return;
+  }
+  graphs.cutGraphEdge(graph_name, vertex_a, vertex_b, weight, output);
+}
+
+void levkin::cmdCreate(
+    std::istream& input, std::ostream& output, DB& graphs)
+{
+  std::string graph_name;
+  if (!(input >> graph_name))
     return;
 
-  eraseIf([&target](const Link& curr) { return curr.lock() == target; });
-}
-
-void Note::addLink(Link ptr)
-{
-  for (Link curr : links) {
-    if (curr.lock() == ptr.lock()) {
-      throw std::logic_error("Double linking is not allowed");
-    }
+  if (graphs.hasGraph(graph_name)) {
+    input.setstate(std::ios::failbit);
+    return;
   }
-  links.push_back(ptr);
-}
 
-const std::vector< Link >& Note::getLinks() const { return links; }
+  graphs.createGraphUnsafe(graph_name);
 
-const std::vector< std::string >& Note::getContent() const { return content; }
-
-void note(std::istream& in, std::ostream&, Database& db)
-{
-  std::string name = getWord(in);
-  if (name.empty())
+  size_t count;
+  if (!(input >> count))
     return;
 
-  if (db.find(name) != db.end()) {
-    throw std::logic_error("already exists");
-  }
-  db[name] = std::make_shared< Note >(name);
-}
-
-auto findNote(Database& db, std::string& name)
-{
-  auto it = db.find(name);
-  if (it == db.end()) {
-    throw std::logic_error("don't know this note yet");
-  }
-  return it;
-}
-
-void line(std::istream& in, std::ostream&, Database& db)
-{
-  std::string name = getWord(in);
-  auto it = findNote(db, name);
-
-  it->second->addContent(getQuote(in));
-}
-
-
-void show(std::istream& in, std::ostream& out, Database& db)
-{
-  std::string name = getWord(in);
-  auto it = findNote(db, name);
-
-  if (it->second->getContent().empty()) {
-    out << "\n";
-  } else {
-    for (const std::string& str : it->second->getContent()) {
-      out << str << "\n";
+  std::string vertex;
+  for (size_t i = 0; i < count; ++i) {
+    if (!(input >> vertex)) {
+      input.setstate(std::ios::failbit);
+      return;
     }
+    graphs.addVertex(graph_name, vertex, output);
   }
 }
 
-const std::string& Note::getId() const { return id; }
-
-void drop(std::istream& in, std::ostream&, Database& db)
+void levkin::cmdMerge(std::istream& input, std::ostream& output, DB& graphs)
 {
-  std::string name = getWord(in);
-  if (db.erase(name) == 0) {
-    throw std::logic_error("don't know this note yet");
+  std::string new_graph, old_graph1, old_graph2;
+  if (!(input >> new_graph >> old_graph1 >> old_graph2)) {
+    return;
   }
+  graphs.mergeGraphs(new_graph, old_graph1, old_graph2, output);
 }
 
-void link(std::istream& in, std::ostream&, Database& db)
+void levkin::cmdExtract(
+    std::istream& input, std::ostream& output, DB& graphs)
 {
-  std::string from = getWord(in);
-  std::string to = getWord(in);
+  std::string new_graph, old_graph;
+  size_t count_k;
 
-  auto fromNoteIter = findNote(db, from);
-  auto toNoteIter = findNote(db, to);
+  if (!(input >> new_graph >> old_graph >> count_k)) {
+    return;
+  }
 
-  fromNoteIter->second->addLink(toNoteIter->second);
-}
-
-void halt(std::istream& in, std::ostream&, Database& db)
-{
-  std::string from = getWord(in);
-  std::string to = getWord(in);
-
-  auto fromNoteIter = findNote(db, from);
-  auto toNoteIter = findNote(db, to);
-
-  fromNoteIter->second->rmLink(toNoteIter->second);
-}
-
-void mind(std::istream& in, std::ostream& out, Database& db)
-{
-  std::string name = getWord(in);
-  auto it = findNote(db, name);
-  std::shared_ptr< Note > note = it->second;
-
-  bool hasOutput = false;
-  for (auto link : note->getLinks()) {
-    if (auto locked = link.lock()) {
-      out << locked->getId() << "\n";
-      hasOutput = true;
+  stuff::Vector< std::string > vertexes;
+  std::string s;
+  for (size_t i = 0; i < count_k; ++i) {
+    if (!(input >> s)) {
+      return;
     }
+    vertexes.pushBack(s);
   }
 
-  if (!hasOutput) {
-    out << "\n";
-  }
-}
-
-void expired(std::istream& in, std::ostream& out, Database& db)
-{
-  std::string name = getWord(in);
-  auto it = findNote(db, name);
-  std::shared_ptr< Note > note = it->second;
-
-  size_t count = 0;
-  for (auto link : note->getLinks()) {
-    if (link.expired()) {
-      count++;
-    }
-  }
-  out << count;
-  out << "\n";
-}
-
-void refresh(std::istream& in, std::ostream&, Database& db)
-{
-  std::string name = getWord(in);
-  auto it = findNote(db, name);
-  std::shared_ptr< Note > note = it->second;
-
-  note->cleanExpired();
-}
-
-Cmds getCmds()
-{
-  Cmds cmds;
-  cmds["note"] = note;
-  cmds["line"] = line;
-  cmds["show"] = show;
-  cmds["drop"] = drop;
-  cmds["link"] = link;
-  cmds["halt"] = halt;
-  cmds["mind"] = mind;
-  cmds["expired"] = expired;
-  cmds["refresh"] = refresh;
-  return cmds;
-}
+  graphs.extractGraphs(new_graph, old_graph, count_k, vertexes, output);
 }

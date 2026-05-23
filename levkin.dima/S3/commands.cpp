@@ -7,24 +7,21 @@ void levkin::cmdGraphs(std::istream&, std::ostream& output, DB& graphs)
   graphs.showGraphs(output);
 }
 
-void levkin::cmdVertexes(
-    std::istream& input, std::ostream& output, DB& graphs)
+void levkin::cmdVertexes(std::istream& input, std::ostream& output, DB& graphs)
 {
   std::string graph_name;
   input >> graph_name;
   graphs.showGraphVertexes(graph_name, output);
 }
 
-void levkin::cmdOutbound(
-    std::istream& input, std::ostream& output, DB& graphs)
+void levkin::cmdOutbound(std::istream& input, std::ostream& output, DB& graphs)
 {
   std::string graph_name, vertex;
   input >> graph_name >> vertex;
   graphs.showGraphOutbound(graph_name, vertex, output);
 }
 
-void levkin::cmdInbound(
-    std::istream& input, std::ostream& output, DB& graphs)
+void levkin::cmdInbound(std::istream& input, std::ostream& output, DB& graphs)
 {
   std::string graph_name, vertex;
   input >> graph_name >> vertex;
@@ -51,8 +48,7 @@ void levkin::cmdCut(std::istream& input, std::ostream& output, DB& graphs)
   graphs.cutGraphEdge(graph_name, vertex_a, vertex_b, weight, output);
 }
 
-void levkin::cmdCreate(
-    std::istream& input, std::ostream& output, DB& graphs)
+void levkin::cmdCreate(std::istream& input, std::ostream& output, DB& graphs)
 {
   std::string graph_name;
   if (!(input >> graph_name))
@@ -88,8 +84,7 @@ void levkin::cmdMerge(std::istream& input, std::ostream& output, DB& graphs)
   graphs.mergeGraphs(new_graph, old_graph1, old_graph2, output);
 }
 
-void levkin::cmdExtract(
-    std::istream& input, std::ostream& output, DB& graphs)
+void levkin::cmdExtract(std::istream& input, std::ostream& output, DB& graphs)
 {
   std::string new_graph, old_graph;
   size_t count_k;

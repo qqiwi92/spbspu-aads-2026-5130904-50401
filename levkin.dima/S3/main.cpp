@@ -3,8 +3,8 @@
 #include <limits>
 #include <string>
 
+#include "commands.hpp"
 #include "graph.hpp"
-
 int main(int args, char** argv)
 {
   if (args != 2) {
@@ -40,8 +40,8 @@ int main(int args, char** argv)
   }
 
   levkin::HashTable<
-      std::string, levkin::cmd_t, levkin::HasherXx< std::string >,
-      levkin::KeyComparator >
+      std::string, levkin::cmd_t, levkin::Sha1Hasher< std::string >,
+      levkin::KeyComp >
       cmds(64);
   cmds.add("graphs", levkin::cmdGraphs);
   cmds.add("vertexes", levkin::cmdVertexes);

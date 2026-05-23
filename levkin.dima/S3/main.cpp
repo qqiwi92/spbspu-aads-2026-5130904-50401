@@ -42,7 +42,7 @@ int main(int args, char** argv)
   levkin::HashTable<
       std::string, levkin::cmd_t, levkin::Sha1Hasher< std::string >,
       levkin::KeyComp >
-      cmds(64);
+      cmds(64, 4);
   cmds.add("graphs", levkin::cmdGraphs);
   cmds.add("vertexes", levkin::cmdVertexes);
   cmds.add("outbound", levkin::cmdOutbound);

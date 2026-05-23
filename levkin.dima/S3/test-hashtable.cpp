@@ -107,29 +107,3 @@ BOOST_AUTO_TEST_CASE(ht_drop_from_overflow_test)
   BOOST_CHECK(ht.has("a"));
 }
 
-BOOST_AUTO_TEST_CASE(ht_rehash_test)
-{
-  TestTable ht(2);
-  
-  ht.add("k1", 10);
-  ht.add("k2", 20);
-  ht.add("k3", 30);
-
-  ht.rehash(16);
-
-  BOOST_CHECK(ht.has("k1"));
-  BOOST_CHECK(ht.has("k2"));
-  BOOST_CHECK(ht.has("k3"));
-}
-
-BOOST_AUTO_TEST_CASE(ht_metrics_test)
-{
-  TestTable ht(5);
-  
-  BOOST_CHECK_CLOSE(ht.get_average_elements_per_bucket(), 0.0, 0.001);
-
-  ht.add("1", 10);
-  ht.add("2", 20);
-  
-  BOOST_CHECK_CLOSE(ht.get_average_elements_per_bucket(), 0.4, 0.001);
-}

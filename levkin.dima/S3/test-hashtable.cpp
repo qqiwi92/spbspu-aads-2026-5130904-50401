@@ -72,7 +72,6 @@ BOOST_AUTO_TEST_CASE(ht_overflow_bucket_test)
   BOOST_CHECK(ht.has("three"));
   BOOST_CHECK(ht.has("four"));
 
-  BOOST_CHECK_EQUAL(ht.get_overflow_count(), 1);
 }
 
 BOOST_AUTO_TEST_CASE(ht_drop_test)

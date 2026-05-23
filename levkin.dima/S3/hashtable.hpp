@@ -4,61 +4,13 @@
 #include "list.hpp"
 #include "vector.hpp"
 #include <algorithm>
-#include <boost/uuid/detail/sha1.hpp>
 #include <cstddef>
+#include "hasher.hpp"
 #include <stdexcept>
 #include <string>
 #include <utility>
 
 namespace levkin {
-  template < class T > struct Sha1Hasher {
-    size_t operator()(const T& key) const
-    {
-      boost::uuids::detail::sha1 sha1;
-      sha1.process_bytes(&key, sizeof(T));
-      unsigned int digest[5];
-      sha1.get_digest(digest);
-
-      if (sizeof(size_t) >= 8) {
-        return (static_cast< size_t >(digest[0]) << 32) | digest[1];
-      }
-      return static_cast< size_t >(digest[0]);
-    }
-  };
-
-  template <> struct Sha1Hasher< std::string > {
-    size_t operator()(const std::string& key) const
-    {
-      boost::uuids::detail::sha1 sha1;
-      sha1.process_bytes(key.data(), key.size());
-      unsigned int digest[5];
-      sha1.get_digest(digest);
-
-      if (sizeof(size_t) >= 8) {
-        return (static_cast< size_t >(digest[0]) << 32) | digest[1];
-      }
-      return static_cast< size_t >(digest[0]);
-    }
-  };
-
-  template <> struct Sha1Hasher< std::pair< std::string, std::string > > {
-    size_t operator()(const std::pair< std::string, std::string >& key) const
-    {
-      boost::uuids::detail::sha1 sha1;
-      sha1.process_bytes(key.first.data(), key.first.size());
-      char separator = '\0';
-      sha1.process_bytes(&separator, 1);
-      sha1.process_bytes(key.second.data(), key.second.size());
-      unsigned int digest[5];
-      sha1.get_digest(digest);
-
-      if (sizeof(size_t) >= 8) {
-        return (static_cast< size_t >(digest[0]) << 32) | digest[1];
-      }
-      return static_cast< size_t >(digest[0]);
-    }
-  };
-
   template < class T > struct Equal {
     bool operator()(const T& a, const T& b) const { return a == b; }
   };

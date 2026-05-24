@@ -141,6 +141,20 @@ namespace levkin {
       return *this;
     }
 
+    bool operator==(const HashTableIterator& rhs) const noexcept
+    {
+      if (table_ != rhs.table_) {
+        return false;
+      }
+      if (index_ != rhs.index_) {
+        return false;
+      }
+      if (index_ == table_->pool_.getSize()) {
+        return overflow_it_ == rhs.overflow_it_;
+      }
+      return true;
+    }
+
     HashTableIterator operator++(int)
     {
       HashTableIterator tmp = *this;
@@ -155,17 +169,6 @@ namespace levkin {
     }
 
     bool hasNext() const noexcept { return *this != table_->end(); }
-
-    bool operator==(const HashTableIterator& rhs) const noexcept
-    {
-      if (table_ != rhs.table_ || index_ != rhs.index_) {
-        return false;
-      }
-      if (index_ < table_->pool_.getSize()) {
-        return true;
-      }
-      return overflow_it_ == rhs.overflow_it_;
-    }
 
     bool operator!=(const HashTableIterator& rhs) const noexcept
     {

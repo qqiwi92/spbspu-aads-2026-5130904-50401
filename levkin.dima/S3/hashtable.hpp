@@ -118,6 +118,9 @@ namespace levkin {
 
     HashTableIterator& operator++()
     {
+      if (!table_)
+        return *this;
+
       if (index_ < table_->pool_.getSize()) {
         index_++;
         while (index_ < table_->pool_.getSize() &&
@@ -143,12 +146,11 @@ namespace levkin {
 
     bool operator==(const HashTableIterator& rhs) const noexcept
     {
-      if (table_ != rhs.table_) {
+      if (table_ != rhs.table_)
         return false;
-      }
-      if (index_ != rhs.index_) {
+      if (index_ != rhs.index_)
         return false;
-      }
+
       if (index_ == table_->pool_.getSize()) {
         return overflow_it_ == rhs.overflow_it_;
       }
@@ -497,9 +499,19 @@ namespace levkin {
     {
       HashTable< Key, Value, Hash, EqualTo > new_table(
           new_num_buckets, new_bucket_capacity);
-      for (auto it = begin(); it != end(); ++it) {
-        new_table.add(it.key(), std::move(it.value()));
+
+      for (size_t i = 0; i < pool_.getSize(); ++i) {
+        if (pool_[i].is_valid_) {
+          new_table.add(std::move(pool_[i].key_), std::move(pool_[i].value_));
+        }
       }
+
+      for (auto it = overflow_.begin(); it != overflow_.end(); ++it) {
+        if (it->is_valid_) {
+          new_table.add(std::move(it->key_), std::move(it->value_));
+        }
+      }
+
       this->swap(new_table);
     }
 

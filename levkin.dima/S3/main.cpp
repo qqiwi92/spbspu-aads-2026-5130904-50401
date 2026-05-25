@@ -18,8 +18,8 @@ int main(int args, char** argv)
     return 1;
   }
 
-  std::istream& input = std::cin;
-  std::ostream& output = std::cout;
+  std::istream& in = std::cin;
+  std::ostream& out = std::cout;
 
   levkin::DB graphs;
 
@@ -57,22 +57,22 @@ int main(int args, char** argv)
       std::numeric_limits< std::streamsize >::max();
   std::string cmd;
 
-  while (input >> cmd) {
+  while (in >> cmd) {
     try {
-      cmds.at(cmd)(input, output, graphs);
-      if (input.fail()) {
-        output << "<INVALID COMMAND>\n";
-        input.clear();
-        input.ignore(max_streamsize, '\n');
+      cmds.at(cmd)(in, out, graphs);
+      if (in.fail()) {
+        out << "<INVALID COMMAND>\n";
+        in.clear();
+        in.ignore(max_streamsize, '\n');
       }
     } catch (const std::out_of_range& e) {
-      output << "<INVALID COMMAND>\n";
-      input.clear();
-      input.ignore(max_streamsize, '\n');
+      out << "<INVALID COMMAND>\n";
+      in.clear();
+      in.ignore(max_streamsize, '\n');
     }
   }
 
-  if (!input.eof() && input.fail()) {
+  if (!in.eof() && in.fail()) {
     std::cerr << "bad input\n";
     return 1;
   }

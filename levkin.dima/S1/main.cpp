@@ -14,11 +14,9 @@ int main()
     } else {
       std::cout << "0\n";
     }
-  } catch (const std::overflow_error &e) {
-    std::cerr << e.what() << "\n";
-    return 1;
   } catch (const std::exception &e) {
     std::cerr << e.what() << "\n";
     return 1;
   }
+  return 0;
 }

@@ -3,26 +3,21 @@
 #include <limits>
 #include <stdexcept>
 #include "list.hpp"
-
 namespace levkin {
-
   IterList getIters(const Data& data)
   {
     IterList res;
-
     for (LCIter< Pair > it = data.cbegin(); it != data.cend(); ++it) {
       res.pushBack(it->second.cbegin());
     }
     return res;
   }
-
   In& readData(In& in, Data& data)
   {
     while (in) {
       String name;
       if (!(in >> name))
         break;
-
       Lst currentList;
       while (in.peek() == ' ' || in.peek() == '\t') {
         in.ignore();
@@ -41,7 +36,6 @@ namespace levkin {
       }
       Pair pair(name, currentList);
       data.pushBack(pair);
-
       if (in.peek() == '\n' || in.peek() == '\r') {
         in.ignore();
       }
@@ -58,10 +52,8 @@ namespace levkin {
       out << pairIt->first;
     }
     out << '\n';
-
     return out;
   }
-
   Out& printTransposed(Out& out, const Data& data)
   {
     if (data.cbegin() == data.cend()) {
@@ -69,22 +61,17 @@ namespace levkin {
     }
     IterList iters = getIters(data);
     List< size_t > sums;
-
     bool rollOneMoreTime = true;
     bool overflowed = false;
-
     while (rollOneMoreTime) {
       rollOneMoreTime = false;
       size_t rowSum = 0;
       bool firstInRow = true;
-
       IterIter iterIter = iters.begin();
       LCIter< Pair > dataIter = data.cbegin();
-
       for (; iterIter != iters.end(); ++iterIter, ++dataIter) {
         if (*iterIter != dataIter->second.cend()) {
           size_t val = **iterIter;
-
           if (!overflowed) {
             if (std::numeric_limits< size_t >::max() - rowSum < val) {
               overflowed = true;
@@ -92,16 +79,12 @@ namespace levkin {
               rowSum += val;
             }
           }
-
           if (!firstInRow) {
             out << " ";
           }
-
           firstInRow = false;
-
           out << **iterIter;
           ++(*iterIter);
-
           rollOneMoreTime = true;
         }
       }
@@ -112,11 +95,9 @@ namespace levkin {
         out << "\n";
       }
     }
-
     if (overflowed) {
       throw std::overflow_error("can't fit sum in size_t. wierd");
     }
-
     if (sums.size() > 0) {
       LCIter< size_t > sumIt = sums.cbegin();
       out << *sumIt;
@@ -130,5 +111,4 @@ namespace levkin {
     }
     return out;
   }
-
 }

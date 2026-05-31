@@ -1,12 +1,10 @@
 #ifndef IO
 #define IO
-
 #include <istream>
 #include <ostream>
 #include <string>
 #include <utility>
 #include "list.hpp"
-
 namespace levkin {
   using String = std::string;
   using Lst = List< size_t >;
@@ -22,5 +20,4 @@ namespace levkin {
   Out& printTransposed(Out&, const Data& data);
   Out& printSums(Out&, const Data& data);
 }
-
 #endif

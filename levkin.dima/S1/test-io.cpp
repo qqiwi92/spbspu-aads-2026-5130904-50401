@@ -1,5 +1,5 @@
-#include "io.hpp"
 #include <boost/test/unit_test.hpp>
+#include "io.hpp"
 using namespace levkin;
 BOOST_AUTO_TEST_CASE(read_data_test) {
   std::stringstream input("first 1 1 1\nsecond 2 2 2 2\nthird\nfourth 4 4");
@@ -33,13 +33,15 @@ BOOST_AUTO_TEST_CASE(output_simulator_test) {
   data.pushBack({"third", l3});
   data.pushBack({"fourth", l4});
   std::stringstream out;
-  printTransposed(printNames(out, data), data);
+  printNames(out, data);
+  out << "\n";
+  printTransposed(out, data);
   std::string expectedOutput = "first second third fourth\n"
                                "1 2 4\n"
                                "1 2 4\n"
                                "1 2\n"
                                "2\n"
-                               "7 7 3 2\n";
+                               "7 7 3 2";
   BOOST_CHECK_EQUAL(out.str(), expectedOutput);
 }
 BOOST_AUTO_TEST_CASE(empty_data_test) {
@@ -62,11 +64,13 @@ BOOST_AUTO_TEST_CASE(completely_empty_input_test) {
   Data data;
   std::stringstream out;
   if (data.cbegin() == data.cend()) {
-    out << "0\n";
+    out << "0";
   } else {
-    printTransposed(printNames(out, data), data);
+    printNames(out, data);
+    out << "\n";
+    printTransposed(out, data);
   }
-  BOOST_CHECK_EQUAL(out.str(), "0\n");
+  BOOST_CHECK_EQUAL(out.str(), "0");
 }
 BOOST_AUTO_TEST_CASE(list_with_no_numbers_test) {
   Data data;
@@ -74,8 +78,9 @@ BOOST_AUTO_TEST_CASE(list_with_no_numbers_test) {
   data.pushBack({"empty_list", emptyList});
   std::stringstream out;
   printNames(out, data);
+  out << "\n";
   printTransposed(out, data);
-  std::string expected = "empty_list\n0\n";
+  std::string expected = "empty_list\n0";
   BOOST_CHECK_EQUAL(out.str(), expected);
 }
 BOOST_AUTO_TEST_CASE(mixed_empty_and_full_test) {
@@ -89,9 +94,11 @@ BOOST_AUTO_TEST_CASE(mixed_empty_and_full_test) {
   data.pushBack({"second", l2});
   data.pushBack({"third", l3});
   std::stringstream out;
-  printTransposed(printNames(out, data), data);
+  printNames(out, data);
+  out << "\n";
+  printTransposed(out, data);
   std::string expected = "first second third\n"
                          "10 20\n"
-                         "30\n";
+                         "30";
   BOOST_CHECK_EQUAL(out.str(), expected);
 }

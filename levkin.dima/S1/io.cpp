@@ -54,7 +54,6 @@ namespace levkin {
     for (; pairIt != data.cend(); ++pairIt) {
       out << " " << pairIt->first;
     }
-    out << '\n';
     return out;
   }
   Out& printTransposed(Out& out, const Data& data)
@@ -108,9 +107,8 @@ namespace levkin {
       for (; sumIt != sums.cend(); ++sumIt) {
         out << " " << *sumIt;
       }
-      out << "\n";
     } else {
-      out << "0\n";
+      out << "0";
     }
     return out;
   }

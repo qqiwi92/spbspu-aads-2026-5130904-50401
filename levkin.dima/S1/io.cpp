@@ -16,8 +16,9 @@ namespace levkin {
   {
     while (in) {
       String name;
-      if (!(in >> name))
+      if (!(in >> name)) {
         break;
+      }
       Lst currentList;
       while (in.peek() == ' ' || in.peek() == '\t') {
         in.ignore();
@@ -44,12 +45,14 @@ namespace levkin {
   }
   Out& printNames(Out& out, const Data& data)
   {
+    if (data.cbegin() == data.cend()) {
+      return out;
+    }
     LCIter< Pair > pairIt = data.cbegin();
+    out << pairIt->first;
+    ++pairIt;
     for (; pairIt != data.cend(); ++pairIt) {
-      if (pairIt != data.cbegin()) {
-        out << " ";
-      }
-      out << pairIt->first;
+      out << " " << pairIt->first;
     }
     out << '\n';
     return out;
@@ -61,11 +64,10 @@ namespace levkin {
     }
     IterList iters = getIters(data);
     List< size_t > sums;
-    bool rollOneMoreTime = true;
     bool overflowed = false;
-    while (rollOneMoreTime) {
-      rollOneMoreTime = false;
+    while (true) {
       size_t rowSum = 0;
+      bool hasOutputInRow = false;
       bool firstInRow = true;
       IterIter iterIter = iters.begin();
       LCIter< Pair > dataIter = data.cbegin();
@@ -82,18 +84,19 @@ namespace levkin {
           if (!firstInRow) {
             out << " ";
           }
+          out << val;
           firstInRow = false;
-          out << **iterIter;
+          hasOutputInRow = true;
           ++(*iterIter);
-          rollOneMoreTime = true;
         }
       }
-      if (rollOneMoreTime) {
-        if (!overflowed) {
-          sums.pushBack(rowSum);
-        }
-        out << "\n";
+      if (!hasOutputInRow) {
+        break;
       }
+      if (!overflowed) {
+        sums.pushBack(rowSum);
+      }
+      out << "\n";
     }
     if (overflowed) {
       throw std::overflow_error("can't fit sum in size_t. wierd");

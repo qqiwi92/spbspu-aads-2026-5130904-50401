@@ -11,7 +11,7 @@ namespace levkin {
   struct NodeBase {
     NodeBase *prev, *next;
   };
-  template < class T > struct Node : public NodeBase {
+  template < class T > struct Node: public NodeBase {
     T val;
   };
 
